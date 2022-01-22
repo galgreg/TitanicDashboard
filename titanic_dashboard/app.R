@@ -47,44 +47,57 @@ server = function(input, output) {
     mutate(
       read.csv(inputFile$datapath, sep = ","),
       Sex = case_when(
-        Sex == 1 ~ "Male",
-        Sex == 2 ~ "Female",
-        TRUE ~ "Unknown"
+        Sex == 1 ~ "Mężczyzna",
+        Sex == 2 ~ "Kobieta",
+        TRUE ~ "Nieznana"
       ),
       Embarked = case_when(
         Embarked == 1 ~ "Cherbourg",
         Embarked == 2 ~ "Queenstown",
         Embarked == 3 ~ "Southampton",
-        TRUE ~ "Unknown"
+        TRUE ~ "Nieznane"
       ),
       Pclass = case_when(
-        Pclass == 1 ~ "Upper",
-        Pclass == 2 ~ "Middle",
-        Pclass == 3 ~ "Lower"
+        Pclass == 1 ~ "Wyższa",
+        Pclass == 2 ~ "Średnia",
+        Pclass == 3 ~ "Niższa"
       ));
   });
   
-  pieChartLayers = list(
-    geom_bar(width = 1, stat = "identity"),
-    coord_polar("y", start = 0),
-    theme_minimal(),
-    theme(
-      axis.title.x = element_blank(),
-      axis.text.x = element_blank(),
-      axis.title.y = element_blank(),
-      panel.border = element_blank(),
-      panel.grid=element_blank(),
-      axis.ticks = element_blank(),
-      plot.title=element_text(family = "Helvetica Neue", size=16, face="bold", hjust = 0.5))
-  );
+  pieChartLayers = reactive({
+    list(
+      geom_bar(width = 1, stat = "identity"),
+      coord_polar("y", start = 0),
+      theme_minimal(),
+      theme(
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.border = element_blank(),
+        panel.grid=element_blank(),
+        axis.ticks = element_blank(),
+        plot.title=element_text(family = "Helvetica Neue", size=16, face="bold", hjust = 0.5)),
+      labs(
+        fill = case_when(
+          input$featSelect == 1 ~ "Płeć",
+          input$featSelect == 2 ~ "Klasa biletu",
+          input$featSelect == 3 ~ "Miasto startowe")));
+  });
   
   output$pieChart1 = renderPlot({
     td = inputData();
     if (is.null(td)) {
       return(NULL);s
     } else {
-      ggplot(td, aes(x = "", y = "", fill = Sex)) +
-          ggtitle("Wszyscy pasażerowie") + pieChartLayers;
+      ggplot(td,
+        aes(
+          x = "",
+          y = "",
+          fill = case_when(
+            input$featSelect == 1 ~ Sex,
+            input$featSelect == 2 ~ Pclass,
+            input$featSelect == 3 ~ Embarked))) +
+      pieChartLayers() + ggtitle("Wszyscy pasażerowie");
     }
   }, bg = "transparent");
   
@@ -93,8 +106,15 @@ server = function(input, output) {
     if (is.null(td)) {
       return(NULL);
     } else {
-      ggplot(td, aes(x = "", y = Survived, fill = Sex)) +
-        ggtitle("Ocaleni pasażerowie") + pieChartLayers;
+      ggplot(td,
+        aes(
+          x = "",
+          y = Survived,
+          fill = case_when(
+            input$featSelect == 1 ~ Sex,
+            input$featSelect == 2 ~ Pclass,
+            input$featSelect == 3 ~ Embarked))) +
+        pieChartLayers() + ggtitle("Ocaleni pasażerowie");
     }
   }, bg = "transparent");
 };
