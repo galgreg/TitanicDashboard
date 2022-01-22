@@ -8,32 +8,48 @@ ui = dashboardPage(
   dashboardHeader(title = "Titanic Dashboard"),
   dashboardSidebar(
     fileInput("tdFile", "Dane wejściowe",
-      accept = c(
-        "text/csv",
-        "text/comma-separated-values,text/plain",
-        ".csv")),
+      accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
     sidebarMenu(
       menuItem("Podział wg cech", tabName = "featBreakdown", icon = icon("chart-pie")),
       menuItem("Rozkład wieku", tabName = "ageDistrib", icon = icon("birthday-cake")),
       menuItem("Oszacuj szanse przetrwania", tabName = "survChances", icon = icon("life-ring")))),
   dashboardBody(
     tabItems(
-      tabItem(tabName = "featBreakdown",
+      tabItem(
+        tabName = "featBreakdown",
         fluidRow(
           column(12,
-            selectInput(
-              "featSelect",
-              "Kryterium podziału",
-              choices = list(
-                "Płeć" = 1,
-                "Klasa biletu" = 2,
-                "Miasto startowe" = 3),
-              selected = 1,
-              multiple = FALSE,
-              width = '100%')),
+            selectInput("featSelect", h3("Kryterium podziału"), multiple = FALSE, 
+              choices = list("Płeć" = 1, "Klasa biletu" = 2, "Miasto startowe" = 3),
+              selected = 1, width = '100%')),
           column(6, plotOutput("pieChart1", width = '100%')),
           column(6, plotOutput("pieChart2", width = '100%')))),
-      tabItem(tabName = "ageDistrib"),
+      tabItem(
+        tabName = "ageDistrib",
+        fluidRow(
+          column(12,
+            sliderInput("ageSlider", h4("Wiek"), min = 0, max = 100, value = c(0, 100),
+              step = 1, round = TRUE, dragRange = FALSE, width = '100%'))),
+        fluidRow(
+          column(3,
+            radioButtons("survRadio", h4("Pasażerowie"), width = '100%',
+              choices = list("Przeżyli" = 1, "Nie przeżyli" = 2, "Wszyscy" = 3),
+              selected = 1)),
+          column(3,
+            h4("Klasy biletu"),
+            checkboxInput("upperClassCbox", "Wyższa", value = TRUE, width = '100%'),
+            checkboxInput("middleClassCbox", "Średnia", value = TRUE, width = '100%'),
+            checkboxInput("lowerClassCbox", "Niższa", value = TRUE, width = '100%')),
+          column(3,
+            h4("Miasta startowe"),
+            checkboxInput("cherbourgCbox", "Cherbourg", value = TRUE, width = '100%'),
+            checkboxInput("queenstownCbox", "Queenstown", value = TRUE, width = '100%'),
+            checkboxInput("southamptonCbox", "Southampton", value = TRUE, width = '100%')),
+          column(3,
+            h4("Płeć"),
+            checkboxInput("maleCbox", "Mężczyzna", value = TRUE, width = '100%'),
+            checkboxInput("femaleCbox", "Kobieta", value = TRUE, width = '100%'))
+          )),
       tabItem(tabName = "survChances")
     )
   )
