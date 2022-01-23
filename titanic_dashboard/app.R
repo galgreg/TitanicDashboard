@@ -1,6 +1,8 @@
 # Import libraries
 library(dplyr)
+library(datasets)
 library(ggplot2)
+library(randomForest)
 library(shiny)
 library(shinydashboard)
 
@@ -11,8 +13,7 @@ ui = dashboardPage(
       accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
     sidebarMenu(
       menuItem("Podział wg cech", tabName = "featBreakdown", icon = icon("chart-pie")),
-      menuItem("Analiza pasażerów", tabName = "passAnalysis", icon = icon("users")),
-      menuItem("Oszacuj szanse przetrwania", tabName = "survChances", icon = icon("life-ring")))),
+      menuItem("Klasyfikacja pasażerów", tabName = "passAnalysis", icon = icon("users")))),
   dashboardBody(
     tabItems(
       tabItem(
@@ -29,7 +30,7 @@ ui = dashboardPage(
         tabName = "passAnalysis",
         fluidRow(
           column(12,
-            sliderInput("ageSlider", h4("Wiek"), min = 0, max = 100, value = c(0, 100),
+            sliderInput("ageRangeSlider", h4("Wiek"), min = 0, max = 100, value = c(0, 100),
               step = 1, round = TRUE, dragRange = FALSE, width = '100%'))),
         fluidRow(
           column(3,
@@ -50,8 +51,7 @@ ui = dashboardPage(
             h4("Płeć"),
             checkboxInput("maleCbox", "Mężczyzna", value = TRUE, width = '100%'),
             checkboxInput("femaleCbox", "Kobieta", value = TRUE, width = '100%'))),
-        fluidRow(column(12, plotOutput("pointsChart", width = '100%')))),
-      tabItem(tabName = "survChances")
+        fluidRow(column(12, plotOutput("pointsChart", width = '100%'))))
     )
   )
 );
@@ -146,7 +146,7 @@ server = function(input, output) {
           TRUE ~ "Nie"
         ));
       
-      ageFilter = td$Age > max(0, input$ageSlider[1]) & td$Age < input$ageSlider[2];
+      ageFilter = td$Age > max(0, input$ageRangeSlider[1]) & td$Age < input$ageRangeSlider[2];
       survFilter =
           if (input$survRadio == 2) td$Survived == "Tak"
           else if (input$survRadio == 3) td$Survived == "Nie"
@@ -191,7 +191,7 @@ server = function(input, output) {
         theme_bw() +
         theme(plot.subtitle = element_text(size = 18)) +
         scale_colour_manual(values = group.colors) +
-        ylim(input$ageSlider[1], input$ageSlider[2]);
+        ylim(input$ageRangeSlider[1], input$ageRangeSlider[2]);
     }
   }, bg = "transparent");
 };
