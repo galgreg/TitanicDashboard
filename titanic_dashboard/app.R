@@ -2,7 +2,8 @@
 library(dplyr)
 library(datasets)
 library(ggplot2)
-library(randomForest)
+library(rpart)
+library(rpart.plot)
 library(shiny)
 library(shinydashboard)
 
@@ -13,7 +14,8 @@ ui = dashboardPage(
       accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
     sidebarMenu(
       menuItem("Podział wg cech", tabName = "featBreakdown", icon = icon("chart-pie")),
-      menuItem("Klasyfikacja pasażerów", tabName = "passAnalysis", icon = icon("users")))),
+      menuItem("Analiza pasażerów", tabName = "passAnalysis", icon = icon("users")),
+      menuItem("Klasyfikacja pasażerów", tabName = "decTree", icon = icon("tree")))),
   dashboardBody(
     tabItems(
       tabItem(
@@ -51,7 +53,14 @@ ui = dashboardPage(
             h4("Płeć"),
             checkboxInput("maleCbox", "Mężczyzna", value = TRUE, width = '100%'),
             checkboxInput("femaleCbox", "Kobieta", value = TRUE, width = '100%'))),
-        fluidRow(column(12, plotOutput("pointsChart", width = '100%'))))
+        fluidRow(column(12, plotOutput("pointsChart", width = '100%')))),
+      tabItem(
+        tabName = "decTree",
+        fluidRow(column(12, h3("Klasyfikacja pasażerów - drzewo decyzyjne"))),
+        fluidRow(column(12, h5("Ułamek dziesiętny to oszacowane prawdopodobieństwo, procenty to udział danych w zbiorze wejściowym."))),
+        fluidRow(
+          column(12,
+            plotOutput("treePlot", width = '100%'))))
     )
   )
 );
@@ -81,6 +90,37 @@ server = function(input, output) {
       ));
   });
   
+  train_test_split = function(data, fraction = 0.8, train = TRUE) {
+    total_rows = nrow(data)
+    train_rows = fraction * total_rows
+    sample = 1:train_rows
+    if (train == TRUE) {
+      return (data[sample, ])
+    } else {
+      return (data[-sample, ])
+    }
+  }
+  
+  output$treePlot = renderPlot({
+    td = inputData();
+    td = mutate(
+      td,
+      Survived = case_when(
+        Survived == 1 ~ "Przeżyje",
+        Survived == 0 ~ "Nie przeżyje"
+      ));
+    td$Survived = factor(td$Survived);
+    td$Pclass = factor(td$Pclass, order = TRUE, levels = c("Niższa", "Średnia", "Wyższa"));
+    td$Sex = factor(td$Sex);
+    td$Embarked = factor(td$Embarked);
+    td = subset(td, select = -c(PassengerId));
+    td = subset(td, Age > 0);
+    train = train_test_split(td, 0.8, train = TRUE);
+    test = train_test_split(td, 0.8, train = FALSE);
+    fit = rpart(Survived ~ ., data = train, method = 'class');
+    rpart.plot(fit, roundint = FALSE, extra = 106);
+  });
+  
   pieChartLayers = reactive({
     list(
       geom_bar(width = 1, stat = "identity"),
@@ -104,7 +144,7 @@ server = function(input, output) {
   output$pieChart1 = renderPlot({
     td = inputData();
     if (is.null(td)) {
-      return(NULL);s
+      return(NULL);
     } else {
       ggplot(td,
         aes(
