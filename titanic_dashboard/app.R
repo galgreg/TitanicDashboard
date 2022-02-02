@@ -103,22 +103,26 @@ server = function(input, output) {
   
   output$treePlot = renderPlot({
     td = inputData();
-    td = mutate(
-      td,
-      Survived = case_when(
-        Survived == 1 ~ "Przeżyje",
-        Survived == 0 ~ "Nie przeżyje"
-      ));
-    td$Survived = factor(td$Survived);
-    td$Pclass = factor(td$Pclass, order = TRUE, levels = c("Niższa", "Średnia", "Wyższa"));
-    td$Sex = factor(td$Sex);
-    td$Embarked = factor(td$Embarked);
-    td = subset(td, select = -c(PassengerId));
-    td = subset(td, Age > 0);
-    train = train_test_split(td, 0.8, train = TRUE);
-    test = train_test_split(td, 0.8, train = FALSE);
-    fit = rpart(Survived ~ ., data = train, method = 'class');
-    rpart.plot(fit, roundint = FALSE, extra = 106);
+    if (is.null(td)) {
+      return(NULL);
+    } else {
+      td = mutate(
+        td,
+        Survived = case_when(
+          Survived == 1 ~ "Przeżyje",
+          Survived == 0 ~ "Nie przeżyje"
+        ));
+      td$Survived = factor(td$Survived);
+      td$Pclass = factor(td$Pclass, order = TRUE, levels = c("Niższa", "Średnia", "Wyższa"));
+      td$Sex = factor(td$Sex);
+      td$Embarked = factor(td$Embarked);
+      td = subset(td, select = -c(PassengerId));
+      td = subset(td, Age > 0);
+      train = train_test_split(td, 0.8, train = TRUE);
+      test = train_test_split(td, 0.8, train = FALSE);
+      fit = rpart(Survived ~ ., data = train, method = 'class');
+      rpart.plot(fit, roundint = FALSE, extra = 106);
+    }
   });
   
   pieChartLayers = reactive({
